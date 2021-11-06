@@ -6,6 +6,7 @@ module Main exposing
     , main
     )
 
+import Application
 import Browser
 import Browser.Navigation as Navigation
 import Html exposing (..)
@@ -20,7 +21,6 @@ import Url exposing (Url)
 type Model
     = Model
         { page : Page
-        , key : Navigation.Key
         }
 
 
@@ -33,35 +33,20 @@ type alias Flags =
     ()
 
 
-initPage : Route -> ( Page, Cmd msg )
-initPage route =
-    case route of
-        Route.Home ->
-            ( Page.Home
-            , Cmd.none
-            )
-
-        Route.TicTacToe ->
-            ( Page.TicTacToe ()
-            , Cmd.none
-            )
-
-
-init : Flags -> Url -> Navigation.Key -> ( Model, Cmd Msg )
-init flags url key =
-    update (UrlChanged url) <|
+init : Flags -> Url -> Application.Navigation msg -> ( Model, Cmd Msg )
+init flags url deps =
+    update deps (UrlChanged url) <|
         Model
             { page = Page.Home
-            , key = key
             }
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg (Model model) =
+update : Application.Navigation Msg -> Msg -> Model -> ( Model, Cmd Msg )
+update nav msg (Model model) =
     case msg of
         UrlRequested (Browser.Internal url) ->
             ( Model model
-            , Navigation.pushUrl model.key (Url.toString url)
+            , nav.pushUrl (Url.toString url)
             )
 
         UrlRequested (Browser.External href) ->
@@ -79,6 +64,20 @@ update msg (Model model) =
             )
 
 
+initPage : Route -> ( Page, Cmd msg )
+initPage route =
+    case route of
+        Route.Home ->
+            ( Page.Home
+            , Cmd.none
+            )
+
+        Route.TicTacToe ->
+            ( Page.TicTacToe ()
+            , Cmd.none
+            )
+
+
 viewPage : Page -> Html Msg
 viewPage page =
     case page of
@@ -90,6 +89,7 @@ viewPage page =
             Page.TicTacToe.view
 
 
+viewNav : Html msg
 viewNav =
     div [ Attr.class "border-b-2 shadow-xs mb-2 py-2 px-2" ]
         [ a
@@ -115,9 +115,9 @@ subscriptions _ =
     Sub.none
 
 
-main : Program Flags Model Msg
+main : Program Flags ( Navigation.Key, Model ) Msg
 main =
-    Browser.application
+    Application.application
         { init = init
         , view = view
         , update = update
