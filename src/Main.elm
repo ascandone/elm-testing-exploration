@@ -27,14 +27,16 @@ type Model
 type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url
+      -- Pages
+    | TicTacToeMsg Page.TicTacToe.Msg
 
 
 type alias Flags =
     ()
 
 
-init : Flags -> Url -> Application.Navigation msg -> ( Model, Cmd Msg )
-init flags url deps =
+init : Flags -> Url -> Application.Navigation Msg -> ( Model, Cmd Msg )
+init () url deps =
     update deps (UrlChanged url) <|
         Model
             { page = Page.Home
@@ -43,24 +45,35 @@ init flags url deps =
 
 update : Application.Navigation Msg -> Msg -> Model -> ( Model, Cmd Msg )
 update nav msg (Model model) =
-    case msg of
-        UrlRequested (Browser.Internal url) ->
+    case ( msg, model.page ) of
+        ( UrlRequested (Browser.Internal url), _ ) ->
             ( Model model
             , nav.pushUrl (Url.toString url)
             )
 
-        UrlRequested (Browser.External href) ->
+        ( UrlRequested (Browser.External href), _ ) ->
             ( Model model
             , Navigation.load href
             )
 
-        UrlChanged url ->
+        ( UrlChanged url, _ ) ->
             let
                 ( page, cmd ) =
                     initPage (Route.fromUrl url |> Maybe.withDefault Route.Home)
             in
             ( Model { model | page = page }
             , cmd
+            )
+
+        -- Pages
+        ( TicTacToeMsg subMsg, Page.TicTacToe subModel ) ->
+            ( Model { model | page = Page.TicTacToe (Page.TicTacToe.update subMsg subModel) }
+            , Cmd.none
+            )
+
+        _ ->
+            ( Model model
+            , Cmd.none
             )
 
 
@@ -73,7 +86,7 @@ initPage route =
             )
 
         Route.TicTacToe ->
-            ( Page.TicTacToe ()
+            ( Page.TicTacToe Page.TicTacToe.init
             , Cmd.none
             )
 
@@ -85,8 +98,9 @@ viewPage page =
             Page.Home.view
                 |> Html.map never
 
-        Page.TicTacToe () ->
-            Page.TicTacToe.view
+        Page.TicTacToe subModel ->
+            Page.TicTacToe.view subModel
+                |> Html.map TicTacToeMsg
 
 
 viewNav : Html msg
@@ -105,7 +119,8 @@ view (Model model) =
     { title = "Title"
     , body =
         [ viewNav
-        , viewPage model.page
+        , div [ Attr.class "mx-4" ]
+            [ div [ Attr.class "max-w-screen-lg mx-auto" ] [ viewPage model.page ] ]
         ]
     }
 

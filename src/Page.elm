@@ -1,6 +1,8 @@
 module Page exposing (Page(..))
 
+import Page.TicTacToe
+
 
 type Page
     = Home
-    | TicTacToe ()
+    | TicTacToe Page.TicTacToe.Model
