@@ -10,13 +10,14 @@ import Url
 suite : Test
 suite =
     describe "Routing"
-        [ Test.fuzz fuzzRoute "Route parsing" <|
-            \route ->
-                route
-                    |> Route.toString
-                    |> Url.fromString
-                    |> Maybe.andThen Route.fromUrl
-                    |> Expect.equal (Just route)
+        [ Test.skip <|
+            Test.fuzz fuzzRoute "Route parsing" <|
+                \route ->
+                    route
+                        |> Route.toString
+                        |> Url.fromString
+                        |> Maybe.andThen Route.fromUrl
+                        |> Expect.equal (Just route)
         ]
 
 

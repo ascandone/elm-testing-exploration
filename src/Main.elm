@@ -4,6 +4,9 @@ module Main exposing
     , Msg
     , init
     , main
+    , update
+    , urlChanged
+    , view
     )
 
 import Application
@@ -140,3 +143,12 @@ main =
         , onUrlChange = UrlChanged
         , onUrlRequest = UrlRequested
         }
+
+
+
+-- Testing utilities
+
+
+urlChanged : Url -> Msg
+urlChanged =
+    UrlChanged

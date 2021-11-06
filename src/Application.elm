@@ -1,4 +1,4 @@
-module Application exposing (Navigation, application, dummy)
+module Application exposing (Navigation, application, dummyNavigation)
 
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Navigation
@@ -20,8 +20,8 @@ navigation key =
     }
 
 
-dummy : Navigation msg
-dummy =
+dummyNavigation : Navigation msg
+dummyNavigation =
     { pushUrl = \_ -> Cmd.none
     }
 
