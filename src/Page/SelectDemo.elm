@@ -17,47 +17,47 @@ type alias Model =
     }
 
 
-selectInit : Select.Model
-selectInit =
-    Select.init
-
-
 init : Model
 init =
     { selectModel =
-        { selectInit
-            | unselectedOptions =
-                countries
-                    |> List.map (\text -> { text = text, id = text })
-        }
+        Select.init
+            (countries
+                |> List.map (\text -> { text = text, id = text })
+            )
     }
 
 
 type Msg
-    = SelectMsg Select.Msg
+    = SelectMsg Select.InternalMsg
 
 
-customSelectUpdate : Select.Msg -> Select.Model -> ( Select.Model, Cmd Select.Msg )
-customSelectUpdate msg model =
-    case msg of
-        Select.BackSpace ->
-            let
-                ( updatedModel, cmd ) =
-                    Select.update msg model
-            in
-            ( { updatedModel
-                | inputText =
-                    model.selectedOptions
-                        |> List.reverse
-                        |> List.head
-                        |> Maybe.map .text
-                        |> Maybe.withDefault model.inputText
-              }
-            , cmd
-            )
 
-        _ ->
-            Select.update msg model
+{-
+
+   customSelectUpdate : Select.InternalMsg -> Select.Model -> ( Select.Model, Cmd Select.InternalMsg )
+   customSelectUpdate msg model =
+       case msg of
+           Select.BackSpace ->
+               let
+                   ( updatedModel, cmd, _ ) =
+                       Select.update msg model
+               in
+               ( { updatedModel
+                   | inputText =
+                       model
+                           |> Select.getSelectedOptions
+                           |> List.reverse
+                           |> List.head
+                           |> Maybe.map .text
+                           |> Maybe.withDefault model.inputText
+                 }
+               , cmd
+               )
+
+           _ ->
+               Select.update msg model
+
+-}
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -65,8 +65,8 @@ update msg model =
     case msg of
         SelectMsg selectMsg ->
             let
-                ( updatedModel, cmd ) =
-                    customSelectUpdate selectMsg model.selectModel
+                ( updatedModel, cmd, _ ) =
+                    Select.update selectMsg model.selectModel
             in
             ( { model | selectModel = updatedModel }
             , Cmd.map SelectMsg cmd
@@ -86,9 +86,11 @@ view { selectModel } =
 
             -- Right side
             , div []
-                [ h3 [ class "font-bold text-gray-900 text-lg" ] [ text ("You selected " ++ String.fromInt (List.length selectModel.selectedOptions) ++ " countries") ]
+                [ h3 [ class "font-bold text-gray-900 text-lg" ]
+                    [ text ("You selected " ++ String.fromInt (List.length (Select.getSelectedOptions selectModel)) ++ " countries")
+                    ]
                 , ul [ class "list-disc" ]
-                    (selectModel.selectedOptions
+                    (Select.getSelectedOptions selectModel
                         |> List.map
                             (\option ->
                                 li [] [ text option.text ]
