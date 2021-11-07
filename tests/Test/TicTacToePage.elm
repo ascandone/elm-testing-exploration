@@ -8,6 +8,7 @@ import Main
 import Page.TicTacToe as App exposing (Coords(..), Player(..))
 import Route exposing (Route)
 import Test exposing (..)
+import Test.Common exposing (changeUrl, simulationMain)
 import Test.Html.Event as Event
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
@@ -15,38 +16,10 @@ import Test.Simulation as Simulation exposing (Simulation)
 import Url exposing (Url)
 
 
-simulation : Simulation App.Model App.Msg {}
+simulation : Simulation Main.Model Main.Msg {}
 simulation =
-    Simulation.fromSandbox
-        { init = App.init
-        , update = App.update
-        , view = App.view
-        }
-
-
-routeToUrl : Route -> Url
-routeToUrl route =
-    { protocol = Url.Http
-    , host = "example.com"
-    , port_ = Nothing
-    , path = Route.toString route
-    , query = Nothing
-    , fragment = Nothing
-    }
-
-
-simulationMain : Simulation Main.Model Main.Msg {}
-simulationMain =
-    Simulation.fromDocument
-        { init = Main.init () (routeToUrl Route.Home) Application.dummyNavigation
-        , update = Main.update Application.dummyNavigation
-        , view = Main.view
-        }
-
-
-changeUrl : Route -> Simulation model Main.Msg ctx -> Simulation model Main.Msg ctx
-changeUrl route =
-    Simulation.triggerMsg (Main.urlChanged (routeToUrl route))
+    simulationMain
+        |> changeUrl Route.TicTacToe
 
 
 suite : Test
@@ -54,8 +27,7 @@ suite =
     describe "tic tac toe UI tests"
         [ test "clicking on a filled cell is a noop" <|
             \() ->
-                simulationMain
-                    |> changeUrl Route.TicTacToe
+                simulation
                     -- X
                     |> Simulation.simulate (App.cellClick First First)
                     -- O
@@ -69,8 +41,7 @@ suite =
                     |> Simulation.run
         , test "complete game" <|
             \() ->
-                simulationMain
-                    |> changeUrl Route.TicTacToe
+                simulation
                     --X
                     |> Simulation.simulate (App.cellClick First First)
                     -- O

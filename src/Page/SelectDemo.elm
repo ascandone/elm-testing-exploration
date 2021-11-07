@@ -58,8 +58,12 @@ view (Model { countriesSelect }) =
         [ div [ class "flex" ]
             [ -- Left side
               div [ class "mx-5 flex-1" ]
-                [ Html.map SelectMsg <|
-                    Select.defaultView { hint = "Enter Value..." } countriesSelect
+                [ countriesSelect
+                    |> Select.defaultView
+                        { hint = "Enter Value..."
+                        , testId = "countries-select"
+                        }
+                    |> Html.map SelectMsg
                 ]
             , div [ class "w-10" ] []
 

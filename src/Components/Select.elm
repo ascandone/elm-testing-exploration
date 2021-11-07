@@ -13,10 +13,11 @@ module Components.Select exposing
     )
 
 import Browser.Dom as Dom
+import Common
 import Html exposing (..)
 import Html.Attributes as A exposing (class)
 import Html.Events as E
-import Json.Decode as Json
+import Json.Decode as Dec
 import Svg
 import Svg.Attributes
 import Svg.Events
@@ -32,7 +33,7 @@ type alias Option =
 type Model
     = Model
         { inputText : String
-        , showDropdown : Bool
+        , inputIsFocused : Bool
         , indexActive : Maybe Int
         , selectedOptions : List Option
         , unselectedOptions : List Option
@@ -52,7 +53,7 @@ init : List Option -> Model
 init options =
     Model
         { inputText = ""
-        , showDropdown = False
+        , inputIsFocused = False
         , indexActive = Just 0
         , selectedOptions = []
         , unselectedOptions = options
@@ -63,7 +64,9 @@ type Msg
     = SetInput String
     | Selected String
     | Unselected String
-    | ShowDropdown Bool
+    | FocusedInput
+    | BlurredInput
+    | ClickedArea
     | SetActive (Maybe Int)
     | ArrowDown
     | ArrowUp
@@ -77,8 +80,18 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model model) =
     case msg of
-        ShowDropdown b ->
-            ( Model { model | showDropdown = b }
+        FocusedInput ->
+            ( Model { model | inputIsFocused = True }
+            , Cmd.none
+            )
+
+        BlurredInput ->
+            ( Model { model | inputIsFocused = False }
+            , Cmd.none
+            )
+
+        ClickedArea ->
+            ( Model model
             , Cmd.none
             )
 
@@ -257,13 +270,18 @@ update msg (Model model) =
 -- View
 
 
+inputTestId : Attribute msg
+inputTestId =
+    Common.dataTestId "input"
+
+
 view : ViewArgs Msg -> Model -> Html Msg
 view args (Model model) =
     let
         { hint, viewUnselected, viewSelected } =
             args
 
-        { indexActive, showDropdown, inputText, selectedOptions } =
+        { indexActive, inputIsFocused, inputText, selectedOptions } =
             model
 
         dropDownEntry : Int -> Option -> Html Msg
@@ -290,10 +308,14 @@ view args (Model model) =
                 )
                 [ viewUnselected { active = active, text = option.text } ]
     in
-    cls "relative max-w-sm"
+    div
+        [ class "relative max-w-sm"
+        , Common.dataTestId args.testId
+        , E.onClick ClickedArea
+        ]
         [ div
             [ class "border border-gray-500 flex px-1 py-1 rounded-md flex-wrap"
-            , A.classList [ ( "ring", model.showDropdown ) ]
+            , A.classList [ ( "ring", model.inputIsFocused ) ]
             ]
             (List.append
                 (List.map (\{ text, id } -> viewSelected { text = text, onDelete = Unselected id }) selectedOptions)
@@ -301,12 +323,13 @@ view args (Model model) =
                     [ A.class "outline-none self-center max-w-full ml-1 h-8"
                     , A.placeholder hint
                     , A.value inputText
-                    , E.onFocus (ShowDropdown True)
-                    , E.onBlur (ShowDropdown False)
                     , E.onInput SetInput
                     , handleKeyDown
                     , A.id inputId
                     , A.autocomplete False
+                    , inputTestId
+                    , E.onBlur BlurredInput
+                    , E.onFocus FocusedInput
                     ]
                     []
                 ]
@@ -314,14 +337,20 @@ view args (Model model) =
         , div [ class "w-full mt-4" ]
             [ div
                 [ class "h-52 absolute w-full"
-                , A.classList [ ( "hidden", not showDropdown ) ]
+
+                --, A.classList [ ( "hidden", not showDropdown ) ]
                 ]
-                [ div
-                    [ A.class "border h-full rounded-md w-full text-gray-800 max-h-full bg-white overflow-y-scroll"
-                    , A.id dropDownId
+              <|
+                if inputIsFocused then
+                    [ div
+                        [ A.class "border h-full rounded-md w-full text-gray-800 max-h-full bg-white overflow-y-scroll"
+                        , A.id dropDownId
+                        ]
+                        (List.indexedMap dropDownEntry (filteredItems (Model model)))
                     ]
-                    (List.indexedMap dropDownEntry (filteredItems (Model model)))
-                ]
+
+                else
+                    []
             ]
         ]
 
@@ -359,6 +388,7 @@ dropDownItem args =
 
 type alias ViewArgs msg =
     { hint : String
+    , testId : String
     , viewSelected :
         { onDelete : msg
         , text : String
@@ -378,12 +408,13 @@ filteredItems (Model { inputText, unselectedOptions }) =
         |> List.filter (.text >> String.toUpper >> String.contains (String.toUpper inputText))
 
 
-defaultView : { hint : String } -> Model -> Html Msg
-defaultView { hint } =
+defaultView : { hint : String, testId : String } -> Model -> Html Msg
+defaultView args =
     view
-        { hint = hint
+        { hint = args.hint
         , viewSelected = chip
         , viewUnselected = dropDownItem
+        , testId = args.testId
         }
 
 
@@ -394,6 +425,11 @@ defaultView { hint } =
 idNameSpace : String
 idNameSpace =
     "@@elm-select__"
+
+
+focusableAreaId : String
+focusableAreaId =
+    idNameSpace ++ "input"
 
 
 inputId : String
@@ -442,7 +478,7 @@ tagger key =
 
 handleKeyDown : Attribute Msg
 handleKeyDown =
-    E.on "keydown" (Json.map tagger E.keyCode)
+    E.on "keydown" (Dec.map tagger E.keyCode)
 
 
 cls : String -> List (Html msg) -> Html msg
