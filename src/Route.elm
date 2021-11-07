@@ -15,6 +15,7 @@ import Url.Parser as Parser exposing (Parser, s, top)
 type Route
     = Home
     | TicTacToe
+    | SelectDemo
 
 
 parser : Parser (Route -> c) c
@@ -22,6 +23,7 @@ parser =
     Parser.oneOf
         [ Parser.map Home top
         , Parser.map TicTacToe <| s "tictactoe"
+        , Parser.map SelectDemo <| s "select-demo"
         ]
 
 
@@ -38,6 +40,9 @@ toString route =
 
         TicTacToe ->
             "/tictactoe"
+
+        SelectDemo ->
+            "/select-demo"
 
 
 href : Route -> Attribute msg

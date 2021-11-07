@@ -18,5 +18,6 @@ view =
         [ h1 [ class "font-bold text-xl" ] [ text "Links:" ]
         , ul [ class "list-disc" ]
             [ viewLink Route.TicTacToe "Tic tac toe"
+            , viewLink Route.SelectDemo "Multiselect component"
             ]
         ]

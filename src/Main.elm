@@ -16,6 +16,7 @@ import Html exposing (..)
 import Html.Attributes as Attr
 import Page exposing (Page)
 import Page.Home
+import Page.SelectDemo
 import Page.TicTacToe
 import Route exposing (Route)
 import Url exposing (Url)
@@ -32,6 +33,7 @@ type Msg
     | UrlChanged Url
       -- Pages
     | TicTacToeMsg Page.TicTacToe.Msg
+    | SelectDemoMsg Page.SelectDemo.Msg
 
 
 type alias Flags =
@@ -74,6 +76,15 @@ update nav msg (Model model) =
             , Cmd.none
             )
 
+        ( SelectDemoMsg subMsg, Page.SelectDemo subModel ) ->
+            let
+                ( newModel, cmd ) =
+                    Page.SelectDemo.update subMsg subModel
+            in
+            ( Model { model | page = Page.SelectDemo newModel }
+            , cmd |> Cmd.map SelectDemoMsg
+            )
+
         _ ->
             ( Model model
             , Cmd.none
@@ -93,6 +104,11 @@ initPage route =
             , Cmd.none
             )
 
+        Route.SelectDemo ->
+            ( Page.SelectDemo Page.SelectDemo.init
+            , Cmd.none
+            )
+
 
 viewPage : Page -> Html Msg
 viewPage page =
@@ -104,6 +120,10 @@ viewPage page =
         Page.TicTacToe subModel ->
             Page.TicTacToe.view subModel
                 |> Html.map TicTacToeMsg
+
+        Page.SelectDemo subModel ->
+            Page.SelectDemo.view subModel
+                |> Html.map SelectDemoMsg
 
 
 viewNav : Html msg
