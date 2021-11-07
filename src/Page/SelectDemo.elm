@@ -8,8 +8,8 @@ module Page.SelectDemo exposing
 
 import Components.Select as Select
 import Data.Countries exposing (countries)
-import Html as H exposing (Html)
-import Html.Attributes as A
+import Html exposing (..)
+import Html.Attributes as A exposing (class)
 
 
 type alias Model =
@@ -75,9 +75,16 @@ update msg model =
 
 view : Model -> Html Msg
 view { selectModel } =
-    H.div [ A.class "p-10" ]
-        [ H.map SelectMsg <|
+    div [ class "p-10 text-gray-800" ]
+        [ Html.map SelectMsg <|
             Select.defaultView { hint = "Enter Value..." } selectModel
-        , H.br [] []
-        , H.text ("You selected " ++ String.fromInt (List.length selectModel.selectedOptions) ++ " countries")
+        , br [] []
+        , h3 [ class "font-bold text-gray-900 text-lg" ] [ text ("You selected " ++ String.fromInt (List.length selectModel.selectedOptions) ++ " countries") ]
+        , ul [ class "list-disc" ]
+            (selectModel.selectedOptions
+                |> List.map
+                    (\option ->
+                        li [] [ text option.text ]
+                    )
+            )
         ]
