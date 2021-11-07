@@ -16,6 +16,7 @@ type Route
     = Home
     | TicTacToe
     | SelectDemo
+    | AsyncDemo
 
 
 parser : Parser (Route -> c) c
@@ -24,6 +25,7 @@ parser =
         [ Parser.map Home top
         , Parser.map TicTacToe <| s "tictactoe"
         , Parser.map SelectDemo <| s "select-demo"
+        , Parser.map AsyncDemo <| s "async-demo"
         ]
 
 
@@ -43,6 +45,9 @@ toString route =
 
         SelectDemo ->
             "/select-demo"
+
+        AsyncDemo ->
+            "/async-demo"
 
 
 href : Route -> Attribute msg

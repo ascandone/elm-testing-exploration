@@ -19,5 +19,6 @@ view =
         , ul [ class "list-disc" ]
             [ viewLink Route.TicTacToe "Tic tac toe"
             , viewLink Route.SelectDemo "Multiselect component"
+            , viewLink Route.AsyncDemo "Async"
             ]
         ]

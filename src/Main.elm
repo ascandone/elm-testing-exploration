@@ -15,6 +15,7 @@ import Browser.Navigation as Navigation
 import Html exposing (..)
 import Html.Attributes as Attr
 import Page exposing (Page)
+import Page.AsyncDemo
 import Page.Home
 import Page.SelectDemo
 import Page.TicTacToe
@@ -34,6 +35,7 @@ type Msg
       -- Pages
     | TicTacToeMsg Page.TicTacToe.Msg
     | SelectDemoMsg Page.SelectDemo.Msg
+    | AsyncDemoMsg Page.AsyncDemo.Msg
 
 
 type alias Flags =
@@ -85,13 +87,22 @@ update nav msg (Model model) =
             , cmd |> Cmd.map SelectDemoMsg
             )
 
+        ( AsyncDemoMsg subMsg, Page.AsyncDemo subModel ) ->
+            let
+                ( newModel, cmd ) =
+                    Page.AsyncDemo.update subMsg subModel
+            in
+            ( Model { model | page = Page.AsyncDemo newModel }
+            , cmd |> Cmd.map AsyncDemoMsg
+            )
+
         _ ->
             ( Model model
             , Cmd.none
             )
 
 
-initPage : Route -> ( Page, Cmd msg )
+initPage : Route -> ( Page, Cmd Msg )
 initPage route =
     case route of
         Route.Home ->
@@ -109,6 +120,15 @@ initPage route =
             , Cmd.none
             )
 
+        Route.AsyncDemo ->
+            let
+                ( model, cmd ) =
+                    Page.AsyncDemo.init
+            in
+            ( Page.AsyncDemo model
+            , cmd |> Cmd.map AsyncDemoMsg
+            )
+
 
 viewPage : Page -> Html Msg
 viewPage page =
@@ -124,6 +144,10 @@ viewPage page =
         Page.SelectDemo subModel ->
             Page.SelectDemo.view subModel
                 |> Html.map SelectDemoMsg
+
+        Page.AsyncDemo subModel ->
+            Page.AsyncDemo.view subModel
+                |> Html.map AsyncDemoMsg
 
 
 viewNav : Html msg
