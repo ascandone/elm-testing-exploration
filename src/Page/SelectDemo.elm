@@ -12,85 +12,65 @@ import Html exposing (..)
 import Html.Attributes exposing (class)
 
 
-type alias Model =
-    { selectModel : Select.Model
-    }
+type Model
+    = Model
+        { countriesSelect : Select.Model
+        }
+
+
+type Msg
+    = SelectMsg Select.Msg
 
 
 init : Model
 init =
-    { selectModel =
-        Select.init
-            (countries
-                |> List.map (\text -> { text = text, id = text })
-            )
-    }
+    Model
+        { countriesSelect = Select.init countriesOption
+        }
 
 
-type Msg
-    = SelectMsg Select.InternalMsg
-
-
-
-{-
-
-   customSelectUpdate : Select.InternalMsg -> Select.Model -> ( Select.Model, Cmd Select.InternalMsg )
-   customSelectUpdate msg model =
-       case msg of
-           Select.BackSpace ->
-               let
-                   ( updatedModel, cmd, _ ) =
-                       Select.update msg model
-               in
-               ( { updatedModel
-                   | inputText =
-                       model
-                           |> Select.getSelectedOptions
-                           |> List.reverse
-                           |> List.head
-                           |> Maybe.map .text
-                           |> Maybe.withDefault model.inputText
-                 }
-               , cmd
-               )
-
-           _ ->
-               Select.update msg model
-
--}
+countriesOption : List Select.Option
+countriesOption =
+    countries
+        |> List.map (\text -> { text = text, id = text })
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg (Model model) =
     case msg of
         SelectMsg selectMsg ->
             let
-                ( updatedModel, cmd, _ ) =
-                    Select.update selectMsg model.selectModel
+                ( updatedModel, cmd ) =
+                    Select.update selectMsg model.countriesSelect
             in
-            ( { model | selectModel = updatedModel }
+            ( Model { model | countriesSelect = updatedModel }
             , Cmd.map SelectMsg cmd
             )
 
 
 view : Model -> Html Msg
-view { selectModel } =
+view (Model { countriesSelect }) =
+    let
+        selectOptions =
+            Select.getSelectedOptions countriesSelect
+    in
     div [ class "p-10 text-gray-800" ]
         [ div [ class "flex" ]
             [ -- Left side
               div [ class "mx-5 flex-1" ]
                 [ Html.map SelectMsg <|
-                    Select.defaultView { hint = "Enter Value..." } selectModel
+                    Select.defaultView { hint = "Enter Value..." } countriesSelect
                 ]
             , div [ class "w-10" ] []
 
             -- Right side
             , div []
                 [ h3 [ class "font-bold text-gray-900 text-lg" ]
-                    [ text ("You selected " ++ String.fromInt (List.length (Select.getSelectedOptions selectModel)) ++ " countries")
+                    [ text "You selected "
+                    , text <| String.fromInt (List.length selectOptions) ++ " countries"
                     ]
                 , ul [ class "list-disc" ]
-                    (Select.getSelectedOptions selectModel
+                    (Select.getSelectedOptions countriesSelect
                         |> List.map
                             (\option ->
                                 li [] [ text option.text ]

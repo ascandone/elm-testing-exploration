@@ -1,19 +1,19 @@
 module Components.Select exposing
-    ( InternalMsg
-    , Model
+    ( Model
+    , Msg
+    , Option
     , ViewArgs
     , chip
     , defaultView
     , dropDownItem
     , getSelectedOptions
     , init
-    , initLast
     , update
     , view
     )
 
 import Browser.Dom as Dom
-import Html as H exposing (Html)
+import Html exposing (..)
 import Html.Attributes as A exposing (class)
 import Html.Events as E
 import Json.Decode as Json
@@ -21,10 +21,6 @@ import Svg
 import Svg.Attributes
 import Svg.Events
 import Task
-
-
-type Event
-    = UpdatedSelections
 
 
 type alias Option =
@@ -64,11 +60,6 @@ init options =
 
 
 type Msg
-    = Internal
-    | External
-
-
-type InternalMsg
     = SetInput String
     | Selected String
     | Unselected String
@@ -83,16 +74,12 @@ type InternalMsg
     | Noop
 
 
-update : InternalMsg -> Model -> ( Model, Cmd InternalMsg, Maybe Event )
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model model) =
     case msg of
         ShowDropdown b ->
-            ( Model
-                { model
-                    | showDropdown = b
-                }
+            ( Model { model | showDropdown = b }
             , Cmd.none
-            , Nothing
             )
 
         SetInput str ->
@@ -102,7 +89,6 @@ update msg (Model model) =
                     , indexActive = Just 0
                 }
             , Cmd.none
-            , Nothing
             )
 
         SetActive x ->
@@ -111,13 +97,11 @@ update msg (Model model) =
                     | indexActive = x
                 }
             , Cmd.none
-            , Nothing
             )
 
         Esc ->
             ( Model model
             , blurInput
-            , Nothing
             )
 
         Enter ->
@@ -125,7 +109,6 @@ update msg (Model model) =
                 Nothing ->
                     ( Model model
                     , Cmd.none
-                    , Nothing
                     )
 
                 Just item ->
@@ -140,7 +123,6 @@ update msg (Model model) =
                         [ Task.attempt (always Noop) (Dom.setViewportOf dropDownId 0 0)
                         , focusInput
                         ]
-                    , Nothing
                     )
 
         ArrowDown ->
@@ -178,7 +160,6 @@ update msg (Model model) =
                             Task.succeed ()
                     )
                 |> Task.attempt (always Noop)
-            , Nothing
             )
 
         ArrowUp ->
@@ -213,14 +194,12 @@ update msg (Model model) =
                             Task.succeed ()
                     )
                 |> Task.attempt (always Noop)
-            , Nothing
             )
 
         BackSpace ->
             if model.inputText /= "" || List.isEmpty model.selectedOptions then
                 ( Model model
                 , Cmd.none
-                , Nothing
                 )
 
             else
@@ -234,7 +213,6 @@ update msg (Model model) =
                         , unselectedOptions = model.unselectedOptions ++ List.drop splitIndex model.selectedOptions
                     }
                 , focusInput
-                , Nothing
                 )
 
         Selected id ->
@@ -249,7 +227,6 @@ update msg (Model model) =
                     , inputText = ""
                 }
             , focusInput
-            , Nothing
             )
 
         Unselected i ->
@@ -263,19 +240,16 @@ update msg (Model model) =
                     , unselectedOptions = model.unselectedOptions ++ eqId -- TODO: sort
                 }
             , Cmd.none
-            , Nothing
             )
 
         KeyDown _ ->
             ( Model model
             , Cmd.none
-            , Nothing
             )
 
         Noop ->
             ( Model model
             , Cmd.none
-            , Nothing
             )
 
 
@@ -283,7 +257,7 @@ update msg (Model model) =
 -- View
 
 
-view : ViewArgs InternalMsg -> Model -> Html InternalMsg
+view : ViewArgs Msg -> Model -> Html Msg
 view args (Model model) =
     let
         { hint, viewUnselected, viewSelected } =
@@ -292,7 +266,7 @@ view args (Model model) =
         { indexActive, showDropdown, inputText, selectedOptions } =
             model
 
-        dropDownEntry : Int -> Option -> Html InternalMsg
+        dropDownEntry : Int -> Option -> Html Msg
         dropDownEntry filteredIndex option =
             let
                 active =
@@ -307,7 +281,7 @@ view args (Model model) =
                     else
                         attrs
             in
-            H.div
+            div
                 (withId
                     [ A.class "cursor-pointer"
                     , E.onMouseOver (SetActive <| Just filteredIndex)
@@ -317,10 +291,13 @@ view args (Model model) =
                 [ viewUnselected { active = active, text = option.text } ]
     in
     cls "relative max-w-sm"
-        [ cls "border border-gray-500 flex px-1 py-1 rounded-md flex-wrap" <|
-            List.append
+        [ div
+            [ class "border border-gray-500 flex px-1 py-1 rounded-md flex-wrap"
+            , A.classList [ ( "ring", model.showDropdown ) ]
+            ]
+            (List.append
                 (List.map (\{ text, id } -> viewSelected { text = text, onDelete = Unselected id }) selectedOptions)
-                [ H.input
+                [ input
                     [ A.class "outline-none self-center max-w-full ml-1 h-8"
                     , A.placeholder hint
                     , A.value inputText
@@ -333,12 +310,13 @@ view args (Model model) =
                     ]
                     []
                 ]
-        , H.div [ class "w-full mt-4" ]
-            [ H.div
+            )
+        , div [ class "w-full mt-4" ]
+            [ div
                 [ class "h-52 absolute w-full"
                 , A.classList [ ( "hidden", not showDropdown ) ]
                 ]
-                [ H.div
+                [ div
                     [ A.class "border h-full rounded-md w-full text-gray-800 max-h-full bg-white overflow-y-scroll"
                     , A.id dropDownId
                     ]
@@ -349,12 +327,12 @@ view args (Model model) =
 
 
 chip : { onDelete : msg, text : String } -> Html msg
-chip { onDelete, text } =
+chip args =
     let
         icon =
             Svg.svg
                 [ Svg.Attributes.class "h-4 w-4 cursor-pointer ml-2 bg-gray-800 rounded-full self-center"
-                , Svg.Events.onClick onDelete
+                , Svg.Events.onClick args.onDelete
                 , Svg.Attributes.style "fill: white"
                 , Svg.Attributes.height "24"
                 , Svg.Attributes.viewBox "0 0 24 24"
@@ -367,16 +345,16 @@ chip { onDelete, text } =
                 ]
     in
     cls "rounded-full h-8 px-3 py-1 mr-1 my-px bg-gray-300 text-gray-800 flex text-sm items-center"
-        [ H.text text, icon ]
+        [ text args.text, icon ]
 
 
 dropDownItem : { active : Bool, text : String } -> Html msg
-dropDownItem { active, text } =
-    H.div
+dropDownItem args =
+    div
         [ A.class "px-2 py-1"
-        , A.classList [ ( "bg-gray-200", active ) ]
+        , A.classList [ ( "bg-gray-200", args.active ) ]
         ]
-        [ H.text text ]
+        [ text args.text ]
 
 
 type alias ViewArgs msg =
@@ -400,7 +378,7 @@ filteredItems (Model { inputText, unselectedOptions }) =
         |> List.filter (.text >> String.toUpper >> String.contains (String.toUpper inputText))
 
 
-defaultView : { hint : String } -> Model -> Html InternalMsg
+defaultView : { hint : String } -> Model -> Html Msg
 defaultView { hint } =
     view
         { hint = hint
@@ -433,49 +411,53 @@ dropDownId =
     idNameSpace ++ "dropDown"
 
 
-handleKeyDown : H.Attribute InternalMsg
+
+{-
+   37 Left
+   39 Right
+-}
+
+
+tagger : Int -> Msg
+tagger key =
+    case key of
+        38 ->
+            ArrowUp
+
+        40 ->
+            ArrowDown
+
+        8 ->
+            BackSpace
+
+        13 ->
+            Enter
+
+        27 ->
+            Esc
+
+        _ ->
+            KeyDown key
+
+
+handleKeyDown : Attribute Msg
 handleKeyDown =
-    {-
-       37 Left
-       39 Right
-    -}
-    let
-        tagger key =
-            case key of
-                38 ->
-                    ArrowUp
-
-                40 ->
-                    ArrowDown
-
-                8 ->
-                    BackSpace
-
-                13 ->
-                    Enter
-
-                27 ->
-                    Esc
-
-                _ ->
-                    KeyDown key
-    in
     E.on "keydown" (Json.map tagger E.keyCode)
 
 
 cls : String -> List (Html msg) -> Html msg
 cls str children =
-    H.div [ A.class str ] children
+    div [ A.class str ] children
 
 
-focusInput : Cmd InternalMsg
+focusInput : Cmd Msg
 focusInput =
-    Task.attempt (always Noop) (Dom.focus inputId)
+    Task.attempt (\_ -> Noop) (Dom.focus inputId)
 
 
-blurInput : Cmd InternalMsg
+blurInput : Cmd Msg
 blurInput =
-    Task.attempt (always Noop) (Dom.blur inputId)
+    Task.attempt (\_ -> Noop) (Dom.blur inputId)
 
 
 listNth : Int -> List a -> Maybe a
@@ -483,11 +465,30 @@ listNth i =
     List.drop i >> List.head
 
 
-initLast : List a -> Maybe ( List a, a )
-initLast lst =
-    case List.reverse lst of
-        [] ->
-            Nothing
 
-        x :: xs ->
-            Just ( List.reverse xs, x )
+{-
+
+   customSelectUpdate : Select.InternalMsg -> Select.Model -> ( Select.Model, Cmd Select.InternalMsg )
+   customSelectUpdate msg model =
+       case msg of
+           Select.BackSpace ->
+               let
+                   ( updatedModel, cmd, _ ) =
+                       Select.update msg model
+               in
+               ( { updatedModel
+                   | inputText =
+                       model
+                           |> Select.getSelectedOptions
+                           |> List.reverse
+                           |> List.head
+                           |> Maybe.map .text
+                           |> Maybe.withDefault model.inputText
+                 }
+               , cmd
+               )
+
+           _ ->
+               Select.update msg model
+
+-}
