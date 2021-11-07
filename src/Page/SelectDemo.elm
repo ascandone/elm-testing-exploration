@@ -9,7 +9,7 @@ module Page.SelectDemo exposing
 import Components.Select as Select
 import Data.Countries exposing (countries)
 import Html exposing (..)
-import Html.Attributes as A exposing (class)
+import Html.Attributes exposing (class)
 
 
 type alias Model =
@@ -76,15 +76,24 @@ update msg model =
 view : Model -> Html Msg
 view { selectModel } =
     div [ class "p-10 text-gray-800" ]
-        [ Html.map SelectMsg <|
-            Select.defaultView { hint = "Enter Value..." } selectModel
-        , br [] []
-        , h3 [ class "font-bold text-gray-900 text-lg" ] [ text ("You selected " ++ String.fromInt (List.length selectModel.selectedOptions) ++ " countries") ]
-        , ul [ class "list-disc" ]
-            (selectModel.selectedOptions
-                |> List.map
-                    (\option ->
-                        li [] [ text option.text ]
+        [ div [ class "flex" ]
+            [ -- Left side
+              div [ class "mx-5 flex-1" ]
+                [ Html.map SelectMsg <|
+                    Select.defaultView { hint = "Enter Value..." } selectModel
+                ]
+            , div [ class "w-10" ] []
+
+            -- Right side
+            , div []
+                [ h3 [ class "font-bold text-gray-900 text-lg" ] [ text ("You selected " ++ String.fromInt (List.length selectModel.selectedOptions) ++ " countries") ]
+                , ul [ class "list-disc" ]
+                    (selectModel.selectedOptions
+                        |> List.map
+                            (\option ->
+                                li [] [ text option.text ]
+                            )
                     )
-            )
+                ]
+            ]
         ]

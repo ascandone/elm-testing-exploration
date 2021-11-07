@@ -13,7 +13,7 @@ module Components.Select exposing
 
 import Browser.Dom as Dom
 import Html as H exposing (Html)
-import Html.Attributes as A
+import Html.Attributes as A exposing (class)
 import Html.Events as E
 import Json.Decode as Json
 import Svg
@@ -325,7 +325,7 @@ chip { onDelete, text } =
                 , Svg.path [ Svg.Attributes.d "M0 0h24v24H0z", Svg.Attributes.fill "none" ] []
                 ]
     in
-    cls "rounded-full h-8 px-3 py-1 mr-1 my-px bg-gray-400 text-gray-800 flex text-sm self-center"
+    cls "rounded-full h-8 px-3 py-1 mr-1 my-px bg-gray-300 text-gray-800 flex text-sm items-center"
         [ H.text text, icon ]
 
 
@@ -333,7 +333,7 @@ dropDownItem : { active : Bool, text : String } -> Html msg
 dropDownItem { active, text } =
     H.div
         [ A.class "px-2 py-1"
-        , A.classList [ ( "bg-gray-300", active ) ]
+        , A.classList [ ( "bg-gray-200", active ) ]
         ]
         [ H.text text ]
 
@@ -409,15 +409,17 @@ view args model =
                     ]
                     []
                 ]
-        , H.div
-            [ A.class "h-40"
-            , A.classList [ ( "hidden", not showDropdown ) ]
-            ]
+        , H.div [ class "w-full mt-4" ]
             [ H.div
-                [ A.class "border w-full text-gray-800 max-h-full bg-white overflow-y-scroll"
-                , A.id dropDownId
+                [ class "h-52 absolute w-full"
+                , A.classList [ ( "hidden", not showDropdown ) ]
                 ]
-                (List.indexedMap dropDownEntry (filteredItems model))
+                [ H.div
+                    [ A.class "border h-full rounded-md w-full text-gray-800 max-h-full bg-white overflow-y-scroll"
+                    , A.id dropDownId
+                    ]
+                    (List.indexedMap dropDownEntry (filteredItems model))
+                ]
             ]
         ]
 
