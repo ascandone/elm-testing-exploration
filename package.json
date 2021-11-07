@@ -7,6 +7,7 @@
     "dev": "parcel index.html"
   },
   "dependencies": {
+    "@tailwindcss/forms": "^0.3.4",
     "autoprefixer": "^10.4.0",
     "parcel": "^2.0.0",
     "postcss": "^8.3.11",
