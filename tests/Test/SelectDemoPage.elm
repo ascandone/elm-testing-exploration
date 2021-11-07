@@ -24,13 +24,22 @@ simulation =
 
 suite : Test
 suite =
-    describe "tic tac toe UI tests"
-        [ test "clicking on a filled cell is a noop" <|
+    describe "SelectDemo UI tests"
+        [ test "Selected countries are showed in the counter" <|
             \() ->
                 simulation
                     |> Simulation.simulate (Select.focus App.countriesSelectTestId)
                     |> Simulation.simulate (Select.input App.countriesSelectTestId "Alb")
-                    |> Simulation.simulate (Select.selectedItemWithId "Albania" App.countriesSelectTestId)
+                    |> Simulation.simulate (Select.selectedItemWithId App.countriesSelectTestId "Albania")
                     |> Simulation.expectHtml (Query.has [ Selector.text "1" ])
+                    |> Simulation.run
+        , test "Removed countries are removed from the counter" <|
+            \() ->
+                simulation
+                    |> Simulation.simulate (Select.focus App.countriesSelectTestId)
+                    |> Simulation.simulate (Select.input App.countriesSelectTestId "Alb")
+                    |> Simulation.simulate (Select.selectedItemWithId App.countriesSelectTestId "Albania")
+                    |> Simulation.simulate (Select.deleteItem App.countriesSelectTestId "Albania")
+                    |> Simulation.expectHtml (Query.has [ Selector.text "0" ])
                     |> Simulation.run
         ]

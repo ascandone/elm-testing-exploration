@@ -72,7 +72,7 @@ view (Model { countriesSelect }) =
             [ -- Left side
               div [ class "mx-5 flex-1" ]
                 [ countriesSelect
-                    |> Select.defaultView
+                    |> Select.view
                         { hint = "Enter Value..."
                         , testId = countriesSelectTestId
                         }

@@ -2,10 +2,7 @@ module Components.Select exposing
     ( Model
     , Msg
     , Option
-    , ViewArgs
-    , chip
-    , defaultView
-    , dropDownItem
+    , deleteItem
     , focus
     , getSelectedOptions
     , init
@@ -20,6 +17,7 @@ import Common
 import Html exposing (..)
 import Html.Attributes as A exposing (class)
 import Html.Events as E
+import Icons
 import Json.Decode as Dec
 import Json.Encode exposing (Value)
 import Svg
@@ -277,12 +275,9 @@ update msg (Model model) =
 -- View
 
 
-view : ViewArgs Msg -> Model -> Html Msg
+view : { hint : String, testId : String } -> Model -> Html Msg
 view args (Model model) =
     let
-        { hint, viewUnselected, viewSelected } =
-            args
-
         { indexActive, inputIsFocused, inputText, selectedOptions } =
             model
 
@@ -309,7 +304,7 @@ view args (Model model) =
                     , Common.dataTestId option.id
                     ]
                 )
-                [ viewUnselected { active = active, text = option.text } ]
+                [ dropDownItem { active = active, text = option.text } ]
     in
     div
         [ class "relative max-w-sm"
@@ -321,10 +316,18 @@ view args (Model model) =
             , A.classList [ ( "ring", model.inputIsFocused ) ]
             ]
             (List.append
-                (List.map (\{ text, id } -> viewSelected { text = text, onDelete = Unselected id }) selectedOptions)
+                (List.map
+                    (\option ->
+                        chip
+                            { option = option
+                            , onDelete = Unselected option.id
+                            }
+                    )
+                    selectedOptions
+                )
                 [ Html.input
                     [ A.class "outline-none self-center max-w-full ml-1 h-8"
-                    , A.placeholder hint
+                    , A.placeholder args.hint
                     , A.value inputText
                     , E.onInput SetInput
                     , handleKeyDown
@@ -366,26 +369,41 @@ inputTestId =
     Common.dataTestId "input"
 
 
-chip : { onDelete : msg, text : String } -> Html msg
+chipTestId : String -> Attribute msg
+chipTestId optionId =
+    Common.dataTestId ("option-chip--" ++ optionId)
+
+
+chipDeleteButtonTestId : Attribute msg
+chipDeleteButtonTestId =
+    Common.dataTestId "option-chip__delete"
+
+
+deleteItem : String -> String -> ( ( String, Value ), Query.Single msg -> Query.Single msg )
+deleteItem testId optionId =
+    ( Event.click
+    , Query.find
+        [ Selector.attribute (Common.dataTestId testId)
+        , Selector.attribute (chipTestId optionId)
+        , Selector.attribute chipDeleteButtonTestId
+        ]
+    )
+
+
+chip : { onDelete : msg, option : Option } -> Html msg
 chip args =
-    let
-        icon =
-            Svg.svg
-                [ Svg.Attributes.class "h-4 w-4 cursor-pointer ml-2 bg-gray-800 rounded-full self-center"
-                , Svg.Events.onClick args.onDelete
-                , Svg.Attributes.style "fill: white"
-                , Svg.Attributes.height "24"
-                , Svg.Attributes.viewBox "0 0 24 24"
-                , Svg.Attributes.width "24"
-                ]
-                [ Svg.path
-                    [ Svg.Attributes.d "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" ]
-                    []
-                , Svg.path [ Svg.Attributes.d "M0 0h24v24H0z", Svg.Attributes.fill "none" ] []
-                ]
-    in
-    cls "rounded-full h-8 px-3 py-1 mr-1 my-px bg-gray-300 text-gray-800 flex text-sm items-center"
-        [ text args.text, icon ]
+    div
+        [ class "rounded-lg h-8 px-3 py-1 mr-1 my-[2px] bg-gray-300 text-gray-800 flex text-sm items-center"
+        , chipTestId args.option.id
+        ]
+        [ text args.option.text
+        , i
+            [ class "cursor-pointer ml-2 bg-gray-800 rounded-full self-center"
+            , E.onClick args.onDelete
+            , chipDeleteButtonTestId
+            ]
+            [ Icons.cross ]
+        ]
 
 
 dropDownItem : { active : Bool, text : String } -> Html msg
@@ -395,22 +413,6 @@ dropDownItem args =
         , A.classList [ ( "bg-gray-200", args.active ) ]
         ]
         [ text args.text ]
-
-
-type alias ViewArgs msg =
-    { hint : String
-    , testId : String
-    , viewSelected :
-        { onDelete : msg
-        , text : String
-        }
-        -> Html msg
-    , viewUnselected :
-        { active : Bool
-        , text : String
-        }
-        -> Html msg
-    }
 
 
 stringContainsCaseInsensitive : String -> String -> Bool
@@ -423,16 +425,6 @@ filteredOptions : Model -> List Option
 filteredOptions (Model { inputText, unselectedOptions }) =
     unselectedOptions
         |> List.filter (.text >> stringContainsCaseInsensitive inputText)
-
-
-defaultView : { hint : String, testId : String } -> Model -> Html Msg
-defaultView args =
-    view
-        { hint = args.hint
-        , viewSelected = chip
-        , viewUnselected = dropDownItem
-        , testId = args.testId
-        }
 
 
 
@@ -564,7 +556,7 @@ focus testId =
 
 
 selectedItemWithId : String -> String -> ( ( String, Value ), Query.Single msg -> Query.Single msg )
-selectedItemWithId valueId testId =
+selectedItemWithId testId valueId =
     ( Event.mouseDown
     , Query.find
         [ Selector.attribute (Common.dataTestId testId)
