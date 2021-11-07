@@ -1,7 +1,7 @@
 module Test.SelectDemoPage exposing (suite)
 
-import Application
 import Common
+import Components.Select as Select
 import Expect
 import Html
 import Html.Attributes as Attr
@@ -14,7 +14,6 @@ import Test.Html.Event as Event
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
 import Test.Simulation as Simulation exposing (Simulation)
-import Url exposing (Url)
 
 
 simulation : Simulation Main.Model Main.Msg {}
@@ -29,24 +28,9 @@ suite =
         [ test "clicking on a filled cell is a noop" <|
             \() ->
                 simulation
-                    |> Simulation.simulate
-                        ( Event.focus
-                        , Query.find
-                            [ Selector.attribute (Common.dataTestId "countries-select")
-                            , Selector.attribute (Common.dataTestId "input")
-                            ]
-                        )
-                    |> Simulation.expectHtml
-                        (\query ->
-                            query
-                                |> Query.contains [ Html.text "Cambodia" ]
-                        )
-                    |> Simulation.simulate
-                        ( Event.click
-                        , Query.find
-                            [ Selector.attribute (Common.dataTestId "countries-select")
-                            , Selector.containing [ Selector.text "Cambodia" ]
-                            ]
-                        )
+                    |> Simulation.simulate (Select.focus App.countriesSelectTestId)
+                    |> Simulation.simulate (Select.input App.countriesSelectTestId "Alb")
+                    |> Simulation.simulate (Select.selectedItemWithId "Albania" App.countriesSelectTestId)
+                    |> Simulation.expectHtml (Query.has [ Selector.text "1" ])
                     |> Simulation.run
         ]

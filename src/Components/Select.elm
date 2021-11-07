@@ -6,8 +6,11 @@ module Components.Select exposing
     , chip
     , defaultView
     , dropDownItem
+    , focus
     , getSelectedOptions
     , init
+    , input
+    , selectedItemWithId
     , update
     , view
     )
@@ -18,10 +21,14 @@ import Html exposing (..)
 import Html.Attributes as A exposing (class)
 import Html.Events as E
 import Json.Decode as Dec
+import Json.Encode exposing (Value)
 import Svg
 import Svg.Attributes
 import Svg.Events
 import Task
+import Test.Html.Event as Event
+import Test.Html.Query as Query
+import Test.Html.Selector as Selector
 
 
 type alias Option =
@@ -118,7 +125,7 @@ update msg (Model model) =
             )
 
         Enter ->
-            case Maybe.andThen (\i -> listNth i (filteredItems (Model model))) model.indexActive of
+            case Maybe.andThen (\i -> listNth i (filteredOptions (Model model))) model.indexActive of
                 Nothing ->
                     ( Model model
                     , Cmd.none
@@ -143,7 +150,7 @@ update msg (Model model) =
                 { model
                     | indexActive =
                         Maybe.map
-                            (\i -> min (List.length (filteredItems (Model model)) - 1) (i + 1))
+                            (\i -> min (List.length (filteredOptions (Model model)) - 1) (i + 1))
                             model.indexActive
                 }
             , Task.map3
@@ -270,11 +277,6 @@ update msg (Model model) =
 -- View
 
 
-inputTestId : Attribute msg
-inputTestId =
-    Common.dataTestId "input"
-
-
 view : ViewArgs Msg -> Model -> Html Msg
 view args (Model model) =
     let
@@ -284,8 +286,8 @@ view args (Model model) =
         { indexActive, inputIsFocused, inputText, selectedOptions } =
             model
 
-        dropDownEntry : Int -> Option -> Html Msg
-        dropDownEntry filteredIndex option =
+        viewOption : Int -> Option -> Html Msg
+        viewOption filteredIndex option =
             let
                 active =
                     indexActive
@@ -304,6 +306,7 @@ view args (Model model) =
                     [ A.class "cursor-pointer"
                     , E.onMouseOver (SetActive <| Just filteredIndex)
                     , E.onMouseDown (Selected option.id)
+                    , Common.dataTestId option.id
                     ]
                 )
                 [ viewUnselected { active = active, text = option.text } ]
@@ -319,7 +322,7 @@ view args (Model model) =
             ]
             (List.append
                 (List.map (\{ text, id } -> viewSelected { text = text, onDelete = Unselected id }) selectedOptions)
-                [ input
+                [ Html.input
                     [ A.class "outline-none self-center max-w-full ml-1 h-8"
                     , A.placeholder hint
                     , A.value inputText
@@ -346,13 +349,21 @@ view args (Model model) =
                         [ A.class "border h-full rounded-md w-full text-gray-800 max-h-full bg-white overflow-y-scroll"
                         , A.id dropDownId
                         ]
-                        (List.indexedMap dropDownEntry (filteredItems (Model model)))
+                        (Model model
+                            |> filteredOptions
+                            |> List.indexedMap viewOption
+                        )
                     ]
 
                 else
                     []
             ]
         ]
+
+
+inputTestId : Attribute msg
+inputTestId =
+    Common.dataTestId "input"
 
 
 chip : { onDelete : msg, text : String } -> Html msg
@@ -402,10 +413,16 @@ type alias ViewArgs msg =
     }
 
 
-filteredItems : Model -> List Option
-filteredItems (Model { inputText, unselectedOptions }) =
+stringContainsCaseInsensitive : String -> String -> Bool
+stringContainsCaseInsensitive subStr str =
+    String.toLower str
+        |> String.contains (String.toLower subStr)
+
+
+filteredOptions : Model -> List Option
+filteredOptions (Model { inputText, unselectedOptions }) =
     unselectedOptions
-        |> List.filter (.text >> String.toUpper >> String.contains (String.toUpper inputText))
+        |> List.filter (.text >> stringContainsCaseInsensitive inputText)
 
 
 defaultView : { hint : String, testId : String } -> Model -> Html Msg
@@ -528,3 +545,36 @@ listNth i =
                Select.update msg model
 
 -}
+-- Testing utilities
+
+
+inputQuery : String -> Query.Single msg -> Query.Single msg
+inputQuery testId =
+    Query.find
+        [ Selector.attribute (Common.dataTestId testId)
+        , Selector.attribute inputTestId
+        ]
+
+
+focus : String -> ( ( String, Value ), Query.Single msg -> Query.Single msg )
+focus testId =
+    ( Event.focus
+    , inputQuery testId
+    )
+
+
+selectedItemWithId : String -> String -> ( ( String, Value ), Query.Single msg -> Query.Single msg )
+selectedItemWithId valueId testId =
+    ( Event.mouseDown
+    , Query.find
+        [ Selector.attribute (Common.dataTestId testId)
+        , Selector.attribute (Common.dataTestId valueId)
+        ]
+    )
+
+
+input : String -> String -> ( ( String, Value ), Query.Single msg -> Query.Single msg )
+input testId value =
+    ( Event.input value
+    , inputQuery testId
+    )

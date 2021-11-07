@@ -1,11 +1,14 @@
 module Page.SelectDemo exposing
     ( Model
     , Msg
+    , countriesSelectTestId
     , init
+    , selectedCountriesNumberTestId
     , update
     , view
     )
 
+import Common
 import Components.Select as Select
 import Data.Countries exposing (countries)
 import Html exposing (..)
@@ -48,6 +51,16 @@ update msg (Model model) =
             )
 
 
+countriesSelectTestId : String
+countriesSelectTestId =
+    "countries-select"
+
+
+selectedCountriesNumberTestId : Attribute msg
+selectedCountriesNumberTestId =
+    Common.dataTestId "selected-countries-number"
+
+
 view : Model -> Html Msg
 view (Model { countriesSelect }) =
     let
@@ -61,7 +74,7 @@ view (Model { countriesSelect }) =
                 [ countriesSelect
                     |> Select.defaultView
                         { hint = "Enter Value..."
-                        , testId = "countries-select"
+                        , testId = countriesSelectTestId
                         }
                     |> Html.map SelectMsg
                 ]
@@ -71,7 +84,8 @@ view (Model { countriesSelect }) =
             , div []
                 [ h3 [ class "font-bold text-gray-900 text-lg" ]
                     [ text "You selected "
-                    , text <| String.fromInt (List.length selectOptions) ++ " countries"
+                    , span [ selectedCountriesNumberTestId ] [ text <| String.fromInt (List.length selectOptions) ]
+                    , text " countries"
                     ]
                 , ul [ class "list-disc" ]
                     (Select.getSelectedOptions countriesSelect
