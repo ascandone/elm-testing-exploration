@@ -341,12 +341,7 @@ view args (Model model) =
                 ]
             )
         , div [ class "w-full mt-4" ]
-            [ div
-                [ class "h-52 absolute w-full"
-
-                --, A.classList [ ( "hidden", not showDropdown ) ]
-                ]
-              <|
+            [ div [ class "h-52 absolute w-full" ] <|
                 if inputIsFocused then
                     [ div
                         [ A.class "border h-full rounded-md w-full text-gray-800 max-h-full bg-white overflow-y-scroll"
