@@ -109,8 +109,8 @@ whenOk f (Simulation state) =
 
 expectModel :
     (model -> Expect.Expectation)
-    -> Simulation model msg r
-    -> Simulation model msg { r | hasExpectation : () }
+    -> Simulation model msg ctx
+    -> Simulation model msg { ctx | hasExpectation : () }
 expectModel expect =
     whenOk <|
         \model state ->
@@ -124,7 +124,7 @@ expectModel expect =
 expectHtml :
     (Query.Single msg -> Expect.Expectation)
     -> Simulation model msg ctx
-    -> Simulation model msg { r | hasExpectation : () }
+    -> Simulation model msg { ctx | hasExpectation : () }
 expectHtml expect =
     whenOk <|
         \model state ->
