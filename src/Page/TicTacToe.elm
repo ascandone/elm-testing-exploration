@@ -18,7 +18,7 @@ import Html.Events
 import Json.Encode exposing (Value)
 import Test.Html.Event
 import Test.Html.Query as Query
-import Test.Html.Selector as Selector
+import Test.Html.Selector as Selector exposing (Selector)
 
 
 type GameStatus
@@ -348,15 +348,14 @@ colTestId colCoord =
     attrTestId ("col-" ++ coordToId colCoord)
 
 
-cellQuery : Coords -> Coords -> Query.Single msg -> Query.Single msg
+cellQuery : Coords -> Coords -> List Selector
 cellQuery rowCoord colCoord =
-    Query.find
-        [ Selector.attribute (rowTestId rowCoord)
-        , Selector.attribute (colTestId colCoord)
-        ]
+    [ Selector.attribute (rowTestId rowCoord)
+    , Selector.attribute (colTestId colCoord)
+    ]
 
 
-cellClick : Coords -> Coords -> ( ( String, Value ), Query.Single msg -> Query.Single msg )
+cellClick : Coords -> Coords -> ( ( String, Value ), List Selector )
 cellClick rowCoord colCoord =
     ( Test.Html.Event.click
     , cellQuery rowCoord colCoord

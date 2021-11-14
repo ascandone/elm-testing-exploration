@@ -30,6 +30,7 @@ import Json.Encode exposing (Value)
 import Test exposing (Test)
 import Test.Html.Event as Event
 import Test.Html.Query as Query
+import Test.Html.Selector exposing (Selector)
 
 
 type alias OkState model eff =
@@ -209,18 +210,18 @@ handleEffect handler ((Simulation simulation) as wrapper) =
                     triggerMsg msg wrapper
 
 
-getMsgResult : ( ( String, Value ), Query.Single msg -> Query.Single msg ) -> OkState model effect -> Simulation model msg effect ctx -> Result String msg
-getMsgResult ( event, lens ) okState (Simulation simulation) =
+getMsgResult : ( ( String, Value ), List Selector ) -> OkState model effect -> Simulation model msg effect ctx -> Result String msg
+getMsgResult ( event, selectors ) okState (Simulation simulation) =
     simulation.app.view okState.model
         |> Query.fromHtml
-        |> lens
+        |> Query.find selectors
         |> Event.simulate event
         |> Event.toResult
 
 
 simulateBy :
     (msg -> Result String msg)
-    -> ( ( String, Value ), Query.Single msg -> Query.Single msg )
+    -> ( ( String, Value ), List Selector )
     -> Simulation model msg eff ctx
     -> Simulation model msg eff ctx
 simulateBy extractMsg pair ((Simulation simulation) as wrapper) =
@@ -243,7 +244,7 @@ simulateBy extractMsg pair ((Simulation simulation) as wrapper) =
                         |> triggerMsg newMsg
 
 
-simulate : ( ( String, Value ), Query.Single msg -> Query.Single msg ) -> Simulation model msg eff ctx -> Simulation model msg eff ctx
+simulate : ( ( String, Value ), List Selector ) -> Simulation model msg eff ctx -> Simulation model msg eff ctx
 simulate pair ((Simulation simulation) as wrapper) =
     case simulation.state of
         Err _ ->

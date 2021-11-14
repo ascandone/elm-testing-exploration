@@ -23,7 +23,7 @@ import Json.Encode exposing (Value)
 import Task
 import Test.Html.Event as Event
 import Test.Html.Query as Query
-import Test.Html.Selector as Selector
+import Test.Html.Selector as Selector exposing (Selector)
 
 
 type alias Option =
@@ -371,14 +371,13 @@ chipDeleteButtonTestId =
     Common.dataTestId "option-chip__delete"
 
 
-deleteItem : String -> String -> ( ( String, Value ), Query.Single msg -> Query.Single msg )
+deleteItem : String -> String -> ( ( String, Value ), List Selector )
 deleteItem testId optionId =
     ( Event.click
-    , Query.find
-        [ Selector.attribute (Common.dataTestId testId)
-        , Selector.attribute (chipTestId optionId)
-        , Selector.attribute chipDeleteButtonTestId
-        ]
+    , [ Selector.attribute (Common.dataTestId testId)
+      , Selector.attribute (chipTestId optionId)
+      , Selector.attribute chipDeleteButtonTestId
+      ]
     )
 
 
@@ -522,32 +521,30 @@ listNth i =
 -- Testing utilities
 
 
-inputQuery : String -> Query.Single msg -> Query.Single msg
+inputQuery : String -> List Selector
 inputQuery testId =
-    Query.find
-        [ Selector.attribute (Common.dataTestId testId)
-        , Selector.attribute inputTestId
-        ]
+    [ Selector.attribute (Common.dataTestId testId)
+    , Selector.attribute inputTestId
+    ]
 
 
-focus : String -> ( ( String, Value ), Query.Single msg -> Query.Single msg )
+focus : String -> ( ( String, Value ), List Selector )
 focus testId =
     ( Event.focus
     , inputQuery testId
     )
 
 
-selectedItemWithId : String -> String -> ( ( String, Value ), Query.Single msg -> Query.Single msg )
+selectedItemWithId : String -> String -> ( ( String, Value ), List Selector )
 selectedItemWithId testId valueId =
     ( Event.mouseDown
-    , Query.find
-        [ Selector.attribute (Common.dataTestId testId)
-        , Selector.attribute (Common.dataTestId valueId)
-        ]
+    , [ Selector.attribute (Common.dataTestId testId)
+      , Selector.attribute (Common.dataTestId valueId)
+      ]
     )
 
 
-input : String -> String -> ( ( String, Value ), Query.Single msg -> Query.Single msg )
+input : String -> String -> ( ( String, Value ), List Selector )
 input testId value =
     ( Event.input value
     , inputQuery testId

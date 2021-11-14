@@ -29,7 +29,7 @@ suite =
                     |> Simulation.expectHtml
                         (\query ->
                             query
-                                |> App.cellQuery First First
+                                |> Query.find (App.cellQuery First First)
                                 |> Query.contains [ Html.text "X" ]
                         )
                     |> Simulation.run

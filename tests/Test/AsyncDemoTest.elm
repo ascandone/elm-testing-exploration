@@ -42,21 +42,21 @@ suite =
         , test "Shows loading screen" <|
             \() ->
                 simulation
-                    |> Simulation.simulate ( Event.input "42", Query.find [ Selector.attribute Main.inputTestId ] )
-                    |> Simulation.simulate ( Event.submit, Query.find [ Selector.attribute Main.searchFormId ] )
+                    |> Simulation.simulate ( Event.input "42", [ Selector.attribute Main.inputTestId ] )
+                    |> Simulation.simulate ( Event.submit, [ Selector.attribute Main.searchFormId ] )
                     |> Simulation.expectHtml (Query.has [ Selector.attribute Main.loaderId ])
                     |> Simulation.run
         , test "Doesn't query empty string" <|
             \() ->
                 simulation
-                    |> Simulation.simulate ( Event.submit, Query.find [ Selector.attribute Main.searchFormId ] )
+                    |> Simulation.simulate ( Event.submit, [ Selector.attribute Main.searchFormId ] )
                     |> Simulation.expectHtml (Query.has [ Selector.attribute Main.notAskedId ])
                     |> Simulation.run
         , test "Performs query" <|
             \() ->
                 simulation
-                    |> Simulation.simulate ( Event.input "123", Query.find [ Selector.attribute Main.inputTestId ] )
-                    |> Simulation.simulate ( Event.submit, Query.find [ Selector.attribute Main.searchFormId ] )
+                    |> Simulation.simulate ( Event.input "123", [ Selector.attribute Main.inputTestId ] )
+                    |> Simulation.simulate ( Event.submit, [ Selector.attribute Main.searchFormId ] )
                     |> Simulation.handleEffect
                         (Effect.handleRequest
                             (Main.fetchTodo { id = 123, onReceived = onReceived })
@@ -78,10 +78,10 @@ suite =
         , test "Race conditions" <|
             \() ->
                 simulation
-                    |> Simulation.simulate ( Event.input "123", Query.find [ Selector.attribute Main.inputTestId ] )
-                    |> Simulation.simulate ( Event.submit, Query.find [ Selector.attribute Main.searchFormId ] )
-                    |> Simulation.simulate ( Event.input "1234", Query.find [ Selector.attribute Main.inputTestId ] )
-                    |> Simulation.simulate ( Event.submit, Query.find [ Selector.attribute Main.searchFormId ] )
+                    |> Simulation.simulate ( Event.input "123", [ Selector.attribute Main.inputTestId ] )
+                    |> Simulation.simulate ( Event.submit, [ Selector.attribute Main.searchFormId ] )
+                    |> Simulation.simulate ( Event.input "1234", [ Selector.attribute Main.inputTestId ] )
+                    |> Simulation.simulate ( Event.submit, [ Selector.attribute Main.searchFormId ] )
                     |> Simulation.handleEffect
                         (Effect.handleRequest
                             (Main.fetchTodo { id = 1234, onReceived = onReceived })
