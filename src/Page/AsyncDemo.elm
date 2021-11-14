@@ -13,6 +13,7 @@ module Page.AsyncDemo exposing
     )
 
 import Common exposing (dataTestId)
+import Data.RemoteData as RemoteData exposing (RemoteData)
 import Effect exposing (Effect)
 import Effect.Http
 import Html exposing (..)
@@ -20,12 +21,6 @@ import Html.Attributes as Attr exposing (class)
 import Html.Events as Events
 import Http
 import Page.AsyncDemo.Data.TodoItem as TodoItem exposing (TodoItem)
-
-
-type RemoteData id value
-    = NotAsked
-    | Loading id
-    | Received id (Result Http.Error value)
 
 
 type Model
@@ -44,7 +39,7 @@ type Msg
 init : ( Model, Effect Msg )
 init =
     ( Model
-        { remoteData = NotAsked
+        { remoteData = RemoteData.NotAsked
         , queryInput = ""
         }
     , Effect.none
@@ -53,6 +48,10 @@ init =
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg (Model model) =
+    let
+        noop =
+            ( Model model, Effect.none )
+    in
     case msg of
         Input value ->
             ( Model { model | queryInput = value }
@@ -61,18 +60,16 @@ update msg (Model model) =
 
         ClickedFetch ->
             case String.toInt model.queryInput of
-                Nothing ->
-                    ( Model model
-                    , Effect.none
-                    )
-
                 Just parsedInt ->
-                    ( Model { model | remoteData = Loading parsedInt }
+                    ( Model { model | remoteData = RemoteData.Loading parsedInt }
                     , fetchTodo { id = parsedInt, onReceived = GotData parsedInt }
                     )
 
-        GotData id data ->
-            ( Model { model | remoteData = Received id data }
+                Nothing ->
+                    noop
+
+        GotData id result ->
+            ( Model { model | remoteData = RemoteData.onReceivedData id result model.remoteData }
             , Effect.none
             )
 
@@ -109,19 +106,19 @@ view (Model model) =
         , hr [ class "my-4" ] []
         , div []
             [ case model.remoteData of
-                NotAsked ->
+                RemoteData.NotAsked ->
                     span [ notAskedId ] [ text "" ]
 
-                Loading _ ->
+                RemoteData.Loading _ ->
                     span [ loaderId ] [ text "Loading..." ]
 
-                Received _ (Ok todoItem) ->
+                RemoteData.Received _ (Ok todoItem) ->
                     p []
                         [ text "Title:"
                         , pre [ titleId ] [ text todoItem.title ]
                         ]
 
-                Received _ (Err e) ->
+                RemoteData.Received _ (Err e) ->
                     text ("Error:" ++ Debug.toString e)
             ]
         ]
