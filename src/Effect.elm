@@ -43,11 +43,16 @@ makeHandler handler =
 
                 Batch (recEffect :: effects) ->
                     case go recEffect of
-                        Just pair ->
-                            Just pair
+                        Just ( msg, filteredEffect ) ->
+                            Just ( msg, Batch (filteredEffect :: effects) )
 
                         Nothing ->
-                            go (Batch effects)
+                            case go (Batch effects) of
+                                Nothing ->
+                                    Nothing
+
+                                Just ( msg, filteredEffect ) ->
+                                    Just ( msg, Batch [ recEffect, filteredEffect ] )
 
                 _ ->
                     enhancedHandler effect
@@ -219,5 +224,21 @@ suite =
                 \() ->
                     Batch [ Batch [], Batch [ get_ "/api/users" ] ]
                         |> expectation
+            , Test.test "Two effects" <|
+                \() ->
+                    Batch [ Batch [ get_ "/api/users/a" ], Batch [ get_ "/api/users" ] ]
+                        |> handleRequest (get_ "/api/users") (Ok "data")
+                        |> (\maybeMsg ->
+                                case maybeMsg of
+                                    Just ( msg, newEffect ) ->
+                                        Expect.all
+                                            [ \() -> msg |> Expect.equal (Ok "data")
+                                            , \() -> isNone newEffect |> Expect.false "Should be false"
+                                            ]
+                                            ()
+
+                                    Nothing ->
+                                        Expect.fail "Should return the effect"
+                           )
             ]
         ]
