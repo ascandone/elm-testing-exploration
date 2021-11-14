@@ -7,6 +7,7 @@ module Page.AsyncDemo exposing
     , loaderId
     , notAskedId
     , searchFormId
+    , titleId
     , update
     , view
     )
@@ -18,6 +19,7 @@ import Html exposing (..)
 import Html.Attributes as Attr exposing (class)
 import Html.Events as Events
 import Http
+import Page.AsyncDemo.Data.TodoItem as TodoItem exposing (TodoItem)
 
 
 type RemoteData id value
@@ -28,13 +30,13 @@ type RemoteData id value
 
 type Model
     = Model
-        { remoteData : RemoteData Int String
+        { remoteData : RemoteData Int TodoItem
         , queryInput : String
         }
 
 
 type Msg
-    = GotData Int (Result Http.Error String)
+    = GotData Int (Result Http.Error TodoItem)
     | Input String
     | ClickedFetch
 
@@ -75,11 +77,11 @@ update msg (Model model) =
             )
 
 
-fetchTodo : { id : Int, onReceived : Result Http.Error String -> msg } -> Effect msg
+fetchTodo : { id : Int, onReceived : Result Http.Error TodoItem -> msg } -> Effect msg
 fetchTodo { id, onReceived } =
     Effect.httpGet
         { url = "https://jsonplaceholder.typicode.com/todos/" ++ String.fromInt id
-        , expect = Effect.Http.expectString onReceived
+        , expect = Effect.Http.expectJson onReceived TodoItem.decoder
         }
 
 
@@ -113,8 +115,11 @@ view (Model model) =
                 Loading _ ->
                     span [ loaderId ] [ text "Loading..." ]
 
-                Received _ (Ok user) ->
-                    pre [] [ text user ]
+                Received _ (Ok todoItem) ->
+                    p []
+                        [ text "Title:"
+                        , pre [ titleId ] [ text todoItem.title ]
+                        ]
 
                 Received _ (Err _) ->
                     text "Error."
@@ -124,6 +129,11 @@ view (Model model) =
 
 
 -- Testing utilities
+
+
+titleId : Attribute msg
+titleId =
+    dataTestId "todoitem-title"
 
 
 inputTestId : Attribute msg
