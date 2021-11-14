@@ -93,7 +93,6 @@ suite =
                                 }
                             )
                         )
-                    |> Simulation.expectHtml (Query.has [ Selector.attribute Main.loaderId ])
                     |> Simulation.handleEffect
                         (Effect.handleRequest
                             (Main.fetchTodo { id = 123, onReceived = onReceived })
