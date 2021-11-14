@@ -5,6 +5,7 @@ import Html.Attributes exposing (class)
 import Route
 
 
+viewLink : Route.Route -> String -> Html msg
 viewLink route label =
     li []
         [ a [ Route.href route, class "underline text-blue-900" ]

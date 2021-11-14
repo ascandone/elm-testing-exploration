@@ -20,9 +20,6 @@ import Html.Events as E
 import Icons
 import Json.Decode as Dec
 import Json.Encode exposing (Value)
-import Svg
-import Svg.Attributes
-import Svg.Events
 import Task
 import Test.Html.Event as Event
 import Test.Html.Query as Query
@@ -431,11 +428,6 @@ idNameSpace =
     "@@elm-select__"
 
 
-focusableAreaId : String
-focusableAreaId =
-    idNameSpace ++ "input"
-
-
 inputId : String
 inputId =
     idNameSpace ++ "input"
@@ -483,11 +475,6 @@ tagger key =
 handleKeyDown : Attribute Msg
 handleKeyDown =
     E.on "keydown" (Dec.map tagger E.keyCode)
-
-
-cls : String -> List (Html msg) -> Html msg
-cls str children =
-    div [ A.class str ] children
 
 
 focusInput : Cmd Msg

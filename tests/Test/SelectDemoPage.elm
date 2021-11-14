@@ -1,22 +1,17 @@
 module Test.SelectDemoPage exposing (suite)
 
-import Common
 import Components.Select as Select
-import Expect
-import Html
-import Html.Attributes as Attr
 import Main
 import Page.SelectDemo as App
-import Route exposing (Route)
+import Route
 import Test exposing (..)
 import Test.Common exposing (changeUrl, simulationMain)
-import Test.Html.Event as Event
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
 import Test.Simulation as Simulation exposing (Simulation)
 
 
-simulation : Simulation Main.Model Main.Msg {}
+simulation : Simulation Main.Model Main.Msg (Cmd Main.Msg) {}
 simulation =
     simulationMain
         |> changeUrl Route.SelectDemo

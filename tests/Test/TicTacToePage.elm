@@ -1,22 +1,16 @@
 module Test.TicTacToePage exposing (suite)
 
-import Application
-import Expect
 import Html
-import Html.Attributes as Attr
 import Main
 import Page.TicTacToe as App exposing (Coords(..), Player(..))
-import Route exposing (Route)
+import Route
 import Test exposing (..)
 import Test.Common exposing (changeUrl, simulationMain)
-import Test.Html.Event as Event
 import Test.Html.Query as Query
-import Test.Html.Selector as Selector
 import Test.Simulation as Simulation exposing (Simulation)
-import Url exposing (Url)
 
 
-simulation : Simulation Main.Model Main.Msg {}
+simulation : Simulation Main.Model Main.Msg (Cmd Main.Msg) {}
 simulation =
     simulationMain
         |> changeUrl Route.TicTacToe

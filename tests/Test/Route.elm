@@ -1,7 +1,7 @@
 module Test.Route exposing (..)
 
-import Expect exposing (Expectation)
-import Fuzz exposing (Fuzzer, int, list, string)
+import Expect
+import Fuzz exposing (Fuzzer)
 import Route exposing (Route)
 import Test exposing (..)
 import Url

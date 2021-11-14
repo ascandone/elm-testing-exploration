@@ -8,7 +8,6 @@ module Route exposing
 import Html exposing (Attribute)
 import Html.Attributes
 import Url exposing (Url)
-import Url.Builder as Builder
 import Url.Parser as Parser exposing (Parser, s, top)
 
 

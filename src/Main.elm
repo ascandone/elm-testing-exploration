@@ -12,6 +12,7 @@ module Main exposing
 import Application
 import Browser
 import Browser.Navigation as Navigation
+import Effect
 import Html exposing (..)
 import Html.Attributes as Attr
 import Page exposing (Page)
@@ -89,11 +90,11 @@ update nav msg (Model model) =
 
         ( AsyncDemoMsg subMsg, Page.AsyncDemo subModel ) ->
             let
-                ( newModel, cmd ) =
+                ( newModel, eff ) =
                     Page.AsyncDemo.update subMsg subModel
             in
             ( Model { model | page = Page.AsyncDemo newModel }
-            , cmd |> Cmd.map AsyncDemoMsg
+            , eff |> Effect.run |> Cmd.map AsyncDemoMsg
             )
 
         _ ->
@@ -126,7 +127,7 @@ initPage route =
                     Page.AsyncDemo.init
             in
             ( Page.AsyncDemo model
-            , cmd |> Cmd.map AsyncDemoMsg
+            , cmd |> Effect.run |> Cmd.map AsyncDemoMsg
             )
 
 

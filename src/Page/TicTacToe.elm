@@ -11,7 +11,6 @@ module Page.TicTacToe exposing
     , view
     )
 
-import Browser
 import Expect
 import Html exposing (..)
 import Html.Attributes exposing (class)
@@ -303,18 +302,6 @@ getGameStatus game =
 
             Nothing ->
                 Playing
-
-
-
--- Main
-
-
-main =
-    Browser.sandbox
-        { init = init
-        , update = update
-        , view = view
-        }
 
 
 
