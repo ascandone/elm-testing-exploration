@@ -16,9 +16,12 @@ import Html exposing (..)
 import Html.Attributes exposing (class)
 import Html.Events
 import Json.Encode exposing (Value)
+import List.Extra as List
 import Test.Html.Event
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector exposing (Selector)
+import UndoList exposing (UndoList)
+import UndoList.Extra as UndoList
 
 
 type GameStatus
@@ -49,15 +52,28 @@ type alias Game =
     ( Row, Row, Row )
 
 
+type alias PresentModel =
+    { game : Game
+    , currentPlayer : Player
+    }
+
+
 type Model
     = Model
-        { game : Game
-        , currentPlayer : Player
-        }
+        (UndoList
+            PresentModel
+        )
+
+
+type PresentMsg
+    = ClickedCell Coords Coords
 
 
 type Msg
-    = ClickedCell Coords Coords
+    = Redo
+    | Undo
+    | Goto Int
+    | New PresentMsg
 
 
 emptyRow : Row
@@ -67,10 +83,11 @@ emptyRow =
 
 init : Model
 init =
-    Model
-        { game = ( emptyRow, emptyRow, emptyRow )
-        , currentPlayer = X
-        }
+    Model <|
+        UndoList.fresh
+            { game = ( emptyRow, emptyRow, emptyRow )
+            , currentPlayer = X
+            }
 
 
 currentCellValue : ( Coords, Coords ) -> Game -> Maybe Player
@@ -78,24 +95,19 @@ currentCellValue ( rowCoord, colCoord ) =
     getTriple rowCoord >> getTriple colCoord
 
 
-update : Msg -> Model -> Model
-update msg ((Model model) as wrapper) =
-    let
-        { game, currentPlayer } =
-            model
-    in
+updatePresent : PresentMsg -> PresentModel -> PresentModel
+updatePresent msg ({ game, currentPlayer } as model) =
     case msg of
         ClickedCell rowCoord colCoord ->
             case ( currentCellValue ( rowCoord, colCoord ) game, getGameStatus game ) of
                 ( Nothing, Playing ) ->
-                    Model
-                        { model
-                            | game = game |> updateGame currentPlayer ( rowCoord, colCoord )
-                            , currentPlayer = swapPlayer currentPlayer
-                        }
+                    { model
+                        | game = game |> updateGame currentPlayer ( rowCoord, colCoord )
+                        , currentPlayer = swapPlayer currentPlayer
+                    }
 
                 _ ->
-                    wrapper
+                    model
 
 
 updateGame : Player -> ( Coords, Coords ) -> Game -> Game
@@ -104,12 +116,75 @@ updateGame player ( rowCoord, colCoord ) =
         (mapTriple colCoord (\_ -> Just player))
 
 
+updateUndoList : Msg -> UndoList PresentModel -> UndoList PresentModel
+updateUndoList msg undoList =
+    case msg of
+        New presentMsg ->
+            UndoList.newWhenDifferent (updatePresent presentMsg undoList.present) undoList
+
+        Undo ->
+            UndoList.undo undoList
+
+        Redo ->
+            UndoList.redo undoList
+
+        Goto index ->
+            UndoList.goto index undoList
+
+
+update : Msg -> Model -> Model
+update msg (Model undoList) =
+    Model (updateUndoList msg undoList)
+
+
 
 -- View
 
 
+btnClass : Attribute msg
+btnClass =
+    class "border bg-blue-500 text-white p-2 leading-none rounded disabled:opacity-70 disabled:cursor-not-allowed"
+
+
 view : Model -> Html Msg
-view (Model model) =
+view (Model undoList) =
+    div []
+        [ button
+            [ btnClass
+            , Html.Events.onClick Undo
+            , Html.Attributes.disabled (not (UndoList.hasPast undoList))
+            ]
+            [ text "Undo" ]
+        , button
+            [ btnClass
+            , Html.Attributes.disabled (not (UndoList.hasFuture undoList))
+            , Html.Events.onClick Redo
+            ]
+            [ text "Redo" ]
+        , div [ class "flex space-around" ]
+            [ Html.map New (viewPresent undoList.present)
+            , div [ class "w-10" ] []
+            , ul []
+                (undoList
+                    |> UndoList.toList
+                    |> List.indexedMap
+                        (\index _ ->
+                            li []
+                                [ button
+                                    [ btnClass
+                                    , Html.Attributes.disabled (index == UndoList.lengthPast undoList)
+                                    , Html.Events.onClick (Goto index)
+                                    ]
+                                    [ text "GOTO #", text (String.fromInt (index + 1)) ]
+                                ]
+                        )
+                )
+            ]
+        ]
+
+
+viewPresent : PresentModel -> Html PresentMsg
+viewPresent model =
     div []
         [ viewGameStatus (getGameStatus model.game)
         , br [] []
@@ -133,7 +208,7 @@ viewGameStatus gameStatus =
                 [ text ("Player " ++ playerToString player ++ " won") ]
 
 
-viewGame : Game -> Html Msg
+viewGame : Game -> Html PresentMsg
 viewGame ( row1, row2, row3 ) =
     div []
         [ viewRow First row1
@@ -142,7 +217,7 @@ viewGame ( row1, row2, row3 ) =
         ]
 
 
-viewRow : Coords -> Row -> Html Msg
+viewRow : Coords -> Row -> Html PresentMsg
 viewRow coord ( a, b, c ) =
     Html.map (ClickedCell coord) <|
         div [ class "flex", rowTestId coord ]
