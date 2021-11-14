@@ -121,8 +121,8 @@ view (Model model) =
                         , pre [ titleId ] [ text todoItem.title ]
                         ]
 
-                Received _ (Err _) ->
-                    text "Error."
+                Received _ (Err e) ->
+                    text ("Error:" ++ Debug.toString e)
             ]
         ]
 

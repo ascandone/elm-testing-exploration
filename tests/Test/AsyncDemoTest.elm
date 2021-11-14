@@ -1,7 +1,9 @@
 module Test.AsyncDemoTest exposing (suite)
 
 import Effect exposing (Effect)
+import Json.Encode as Enc
 import Page.AsyncDemo as Main
+import Page.AsyncDemo.Data.TodoItem as TodoItem exposing (TodoItem)
 import Test exposing (..)
 import Test.Html.Event as Event
 import Test.Html.Query as Query
@@ -22,6 +24,11 @@ simulation =
 onReceived : x -> ()
 onReceived _ =
     ()
+
+
+mockOkTodoItem : TodoItem -> Result error String
+mockOkTodoItem todoItem =
+    Ok (Enc.encode 2 (TodoItem.encode todoItem))
 
 
 suite : Test
@@ -53,9 +60,20 @@ suite =
                     |> Simulation.withHandler
                         (Effect.handleRequest
                             (Main.fetchTodo { id = 123, onReceived = onReceived })
-                            (Ok "data")
+                            (mockOkTodoItem
+                                { userId = 0
+                                , id = 123
+                                , title = "example-title"
+                                , completed = False
+                                }
+                            )
                         )
-                    |> Simulation.expectHtml (Query.hasNot [ Selector.attribute Main.loaderId ])
+                    |> Simulation.expectHtml
+                        (Query.has
+                            [ Selector.attribute Main.inputTestId
+                            , Selector.containing [ Selector.text "example-title" ]
+                            ]
+                        )
                     |> Simulation.run
         , test "Race conditions" <|
             \() ->
@@ -67,13 +85,30 @@ suite =
                     |> Simulation.withHandler
                         (Effect.handleRequest
                             (Main.fetchTodo { id = 1234, onReceived = onReceived })
-                            (Ok "data")
+                            (mockOkTodoItem
+                                { userId = 0
+                                , id = 1234
+                                , title = "title-1234"
+                                , completed = False
+                                }
+                            )
                         )
                     |> Simulation.withHandler
                         (Effect.handleRequest
                             (Main.fetchTodo { id = 123, onReceived = onReceived })
-                            (Ok "data")
+                            (mockOkTodoItem
+                                { userId = 0
+                                , id = 123
+                                , title = "title-123"
+                                , completed = False
+                                }
+                            )
                         )
-                    |> Simulation.expectHtml (Query.hasNot [ Selector.attribute Main.loaderId ])
+                    |> Simulation.expectHtml
+                        (Query.has
+                            [ Selector.attribute Main.inputTestId
+                            , Selector.containing [ Selector.text "title-1234" ]
+                            ]
+                        )
                     |> Simulation.run
         ]
