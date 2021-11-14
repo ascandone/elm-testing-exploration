@@ -206,8 +206,9 @@ handleEffect handler ((Simulation simulation) as wrapper) =
                     Simulation { simulation | state = Err "handler error" }
 
                 Just ( msg, newQueue ) ->
-                    -- TODO update queue
-                    triggerMsg msg wrapper
+                    whenOk
+                        (\newOkState newSimulation -> { newSimulation | state = Ok { newOkState | queue = newQueue } })
+                        (triggerMsg msg wrapper)
 
 
 getMsgResult : ( ( String, Value ), List Selector ) -> OkState model effect -> Simulation model msg effect ctx -> Result String msg
