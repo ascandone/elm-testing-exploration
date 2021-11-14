@@ -57,7 +57,7 @@ suite =
                 simulation
                     |> Simulation.simulate ( Event.input "123", Query.find [ Selector.attribute Main.inputTestId ] )
                     |> Simulation.simulate ( Event.submit, Query.find [ Selector.attribute Main.searchFormId ] )
-                    |> Simulation.withHandler
+                    |> Simulation.handleEffect
                         (Effect.handleRequest
                             (Main.fetchTodo { id = 123, onReceived = onReceived })
                             (mockOkTodoItem
@@ -82,7 +82,7 @@ suite =
                     |> Simulation.simulate ( Event.submit, Query.find [ Selector.attribute Main.searchFormId ] )
                     |> Simulation.simulate ( Event.input "1234", Query.find [ Selector.attribute Main.inputTestId ] )
                     |> Simulation.simulate ( Event.submit, Query.find [ Selector.attribute Main.searchFormId ] )
-                    |> Simulation.withHandler
+                    |> Simulation.handleEffect
                         (Effect.handleRequest
                             (Main.fetchTodo { id = 1234, onReceived = onReceived })
                             (mockOkTodoItem
@@ -93,7 +93,7 @@ suite =
                                 }
                             )
                         )
-                    |> Simulation.withHandler
+                    |> Simulation.handleEffect
                         (Effect.handleRequest
                             (Main.fetchTodo { id = 123, onReceived = onReceived })
                             (mockOkTodoItem

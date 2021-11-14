@@ -5,11 +5,11 @@ module Test.Simulation exposing
     , fromDocument
     , fromElement
     , fromSandbox
+    , handleEffect
     , run
     , simulate
     , simulateBy
     , triggerMsg
-    , withHandler
     )
 
 {-| Experimental testing utility
@@ -192,8 +192,8 @@ triggerMsg msg =
             }
 
 
-withHandler : (effect -> Maybe ( msg, effect )) -> Simulation model msg effect ctx -> Simulation model msg effect ctx
-withHandler handler ((Simulation simulation) as wrapper) =
+handleEffect : (effect -> Maybe ( msg, effect )) -> Simulation model msg effect ctx -> Simulation model msg effect ctx
+handleEffect handler ((Simulation simulation) as wrapper) =
     case simulation.state of
         Err _ ->
             wrapper
