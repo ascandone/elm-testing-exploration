@@ -48,11 +48,11 @@ suite =
         , test "Performs query" <|
             \() ->
                 simulation
-                    |> Simulation.simulate ( Event.input "abc", Query.find [ Selector.attribute Main.inputTestId ] )
+                    |> Simulation.simulate ( Event.input "123", Query.find [ Selector.attribute Main.inputTestId ] )
                     |> Simulation.simulate ( Event.submit, Query.find [ Selector.attribute Main.searchFormId ] )
                     |> Simulation.withHandler
                         (Effect.handleRequest
-                            (Main.fetchTodo { id = "abc", onReceived = onReceived })
+                            (Main.fetchTodo { id = 123, onReceived = onReceived })
                             (Ok "data")
                         )
                     |> Simulation.expectHtml (Query.hasNot [ Selector.attribute Main.loaderId ])
@@ -60,18 +60,18 @@ suite =
         , test "Race conditions" <|
             \() ->
                 simulation
-                    |> Simulation.simulate ( Event.input "abc", Query.find [ Selector.attribute Main.inputTestId ] )
+                    |> Simulation.simulate ( Event.input "123", Query.find [ Selector.attribute Main.inputTestId ] )
                     |> Simulation.simulate ( Event.submit, Query.find [ Selector.attribute Main.searchFormId ] )
-                    |> Simulation.simulate ( Event.input "abcde", Query.find [ Selector.attribute Main.inputTestId ] )
+                    |> Simulation.simulate ( Event.input "1234", Query.find [ Selector.attribute Main.inputTestId ] )
                     |> Simulation.simulate ( Event.submit, Query.find [ Selector.attribute Main.searchFormId ] )
                     |> Simulation.withHandler
                         (Effect.handleRequest
-                            (Main.fetchTodo { id = "abcde", onReceived = onReceived })
+                            (Main.fetchTodo { id = 1234, onReceived = onReceived })
                             (Ok "data")
                         )
                     |> Simulation.withHandler
                         (Effect.handleRequest
-                            (Main.fetchTodo { id = "abc", onReceived = onReceived })
+                            (Main.fetchTodo { id = 123, onReceived = onReceived })
                             (Ok "data")
                         )
                     |> Simulation.expectHtml (Query.hasNot [ Selector.attribute Main.loaderId ])

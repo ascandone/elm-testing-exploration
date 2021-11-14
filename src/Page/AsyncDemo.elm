@@ -28,13 +28,13 @@ type RemoteData id value
 
 type Model
     = Model
-        { remoteData : RemoteData String String
+        { remoteData : RemoteData Int String
         , queryInput : String
         }
 
 
 type Msg
-    = GotData String (Result Http.Error String)
+    = GotData Int (Result Http.Error String)
     | Input String
     | ClickedFetch
 
@@ -58,15 +58,16 @@ update msg (Model model) =
             )
 
         ClickedFetch ->
-            if String.isEmpty model.queryInput then
-                ( Model model
-                , Effect.none
-                )
+            case String.toInt model.queryInput of
+                Nothing ->
+                    ( Model model
+                    , Effect.none
+                    )
 
-            else
-                ( Model { model | remoteData = Loading model.queryInput }
-                , fetchTodo { id = model.queryInput, onReceived = GotData model.queryInput }
-                )
+                Just parsedInt ->
+                    ( Model { model | remoteData = Loading parsedInt }
+                    , fetchTodo { id = parsedInt, onReceived = GotData parsedInt }
+                    )
 
         GotData id data ->
             ( Model { model | remoteData = Received id data }
@@ -74,10 +75,10 @@ update msg (Model model) =
             )
 
 
-fetchTodo : { id : String, onReceived : Result Http.Error String -> msg } -> Effect msg
+fetchTodo : { id : Int, onReceived : Result Http.Error String -> msg } -> Effect msg
 fetchTodo { id, onReceived } =
     Effect.httpGet
-        { url = "https://jsonplaceholder.typicode.com/todos/" ++ id
+        { url = "https://jsonplaceholder.typicode.com/todos/" ++ String.fromInt id
         , expect = Effect.Http.expectString onReceived
         }
 
