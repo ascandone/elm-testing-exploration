@@ -119,7 +119,7 @@ view (Model model) =
                         ]
 
                 RemoteData.Received _ (Err e) ->
-                    text ("Error:" ++ Debug.toString e)
+                    text "Error."
             ]
         ]
 

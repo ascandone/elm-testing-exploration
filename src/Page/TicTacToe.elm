@@ -12,11 +12,11 @@ module Page.TicTacToe exposing
     )
 
 import Expect
+import FeatherIcons
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Html.Events
 import Json.Encode exposing (Value)
-import List.Extra as List
 import Test.Html.Event
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector exposing (Selector)
@@ -141,45 +141,58 @@ update msg (Model undoList) =
 -- View
 
 
-btnClass : Attribute msg
-btnClass =
-    class "border bg-blue-500 text-white p-2 leading-none rounded disabled:opacity-70 disabled:cursor-not-allowed"
-
-
 view : Model -> Html Msg
 view (Model undoList) =
     div []
-        [ button
-            [ btnClass
-            , Html.Events.onClick Undo
-            , Html.Attributes.disabled (not (UndoList.hasPast undoList))
-            ]
-            [ text "Undo" ]
-        , button
-            [ btnClass
-            , Html.Attributes.disabled (not (UndoList.hasFuture undoList))
-            , Html.Events.onClick Redo
-            ]
-            [ text "Redo" ]
+        [ viewUndoRedoButtons undoList
         , div [ class "flex space-around" ]
             [ Html.map New (viewPresent undoList.present)
             , div [ class "w-10" ] []
-            , ul []
-                (undoList
-                    |> UndoList.toList
-                    |> List.indexedMap
-                        (\index _ ->
-                            li []
-                                [ button
-                                    [ btnClass
-                                    , Html.Attributes.disabled (index == UndoList.lengthPast undoList)
-                                    , Html.Events.onClick (Goto index)
-                                    ]
-                                    [ text "GOTO #", text (String.fromInt (index + 1)) ]
-                                ]
-                        )
-                )
+            , viewHistory undoList
             ]
+        ]
+
+
+viewGotoBtn : Int -> UndoList state -> Html Msg
+viewGotoBtn index undoList =
+    button
+        [ class "border shadow-2xl bg-pink-800 text-pink-100 p-2 leading-none rounded font-semibold "
+        , class "disabled:opacity-70 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-gray-800"
+        , Html.Attributes.disabled (index == UndoList.lengthPast undoList)
+        , Html.Events.onClick (Goto index)
+        ]
+        [ text "Step #", text (String.fromInt (index + 1)) ]
+
+
+viewHistory : UndoList state -> Html Msg
+viewHistory undoList =
+    ul [ class "space-y-4" ]
+        (UndoList.toList undoList
+            |> List.indexedMap
+                (\index _ -> li [] [ viewGotoBtn index undoList ])
+        )
+
+
+iconBtnClass =
+    class "p-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+
+
+viewUndoRedoButtons : UndoList PresentModel -> Html Msg
+viewUndoRedoButtons undoList =
+    div [ class "flex" ]
+        [ button
+            [ Html.Events.onClick Undo
+            , iconBtnClass
+            , Html.Attributes.classList [ ( "invisible", not (UndoList.hasPast undoList) ) ]
+            ]
+            [ FeatherIcons.toHtml [] FeatherIcons.arrowLeft ]
+        , div [ class "w-2" ] []
+        , button
+            [ Html.Events.onClick Redo
+            , iconBtnClass
+            , Html.Attributes.classList [ ( "invisible", not (UndoList.hasFuture undoList) ) ]
+            ]
+            [ FeatherIcons.toHtml [] FeatherIcons.arrowRight ]
         ]
 
 
