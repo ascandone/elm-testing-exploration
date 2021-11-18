@@ -2,6 +2,7 @@ module Test.UndoList exposing (suite)
 
 import Expect
 import Fuzz exposing (Fuzzer)
+import Fuzz.Extra as Fuzz
 import Test exposing (Test)
 import UndoList exposing (UndoList)
 import UndoList.Extra
@@ -51,26 +52,18 @@ suite =
                     |> UndoList.Extra.goto 0
                     |> UndoList.Extra.goto 2
                     |> Expect.equal (UndoList [ "b", "a" ] "c" [ "d" ])
-        , Test.fuzz2 (undoListFuzzer Fuzz.string) Fuzz.int "Length is at most index" <|
+        , Test.fuzz2 (undoListFuzzer Fuzz.string) Fuzz.nonNegativeInt "Length is at most index" <|
             \undoList index ->
-                if index >= 0 then
-                    undoList
-                        |> UndoList.Extra.goto index
-                        |> (\newUndoList ->
-                                UndoList.lengthPast newUndoList
-                                    |> Expect.atMost index
-                           )
-
-                else
-                    Expect.pass
-        , Test.fuzz2 (undoListFuzzer Fuzz.string) Fuzz.int "Negative nums are truncated to zero" <|
+                undoList
+                    |> UndoList.Extra.goto index
+                    |> (\newUndoList ->
+                            UndoList.lengthPast newUndoList
+                                |> Expect.atMost index
+                       )
+        , Test.fuzz2 (undoListFuzzer Fuzz.string) Fuzz.negativeInt "Negative nums are truncated to zero" <|
             \undoList index ->
-                if index < 0 then
-                    UndoList.Extra.goto index undoList
-                        |> Expect.equal (UndoList.Extra.goto 0 undoList)
-
-                else
-                    Expect.pass
+                UndoList.Extra.goto index undoList
+                    |> Expect.equal (UndoList.Extra.goto 0 undoList)
         ]
 
 
