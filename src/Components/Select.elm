@@ -22,7 +22,6 @@ import Json.Decode as Dec
 import Json.Encode exposing (Value)
 import Task
 import Test.Html.Event as Event
-import Test.Html.Query as Query
 import Test.Html.Selector as Selector exposing (Selector)
 
 
@@ -39,6 +38,7 @@ type Model
         , indexActive : Maybe Int
         , selectedOptions : List Option
         , unselectedOptions : List Option
+        , mouseDown : Bool
         }
 
 
@@ -59,11 +59,14 @@ init options =
         , indexActive = Just 0
         , selectedOptions = []
         , unselectedOptions = options
+        , mouseDown = False
         }
 
 
 type Msg
     = SetInput String
+    | MouseDown String
+    | MouseUp
     | Selected String
     | Unselected String
     | FocusedInput
@@ -82,13 +85,25 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model model) =
     case msg of
+        MouseDown str ->
+            update (Selected str) (Model { model | mouseDown = True })
+
+        MouseUp ->
+            ( Model { model | mouseDown = False }
+            , Cmd.none
+            )
+
         FocusedInput ->
             ( Model { model | inputIsFocused = True }
             , Cmd.none
             )
 
         BlurredInput ->
-            ( Model { model | inputIsFocused = False }
+            ( if model.mouseDown then
+                Model model
+
+              else
+                Model { model | inputIsFocused = False }
             , Cmd.none
             )
 
@@ -297,7 +312,8 @@ view args (Model model) =
                 (withId
                     [ A.class "cursor-pointer"
                     , E.onMouseOver (SetActive <| Just filteredIndex)
-                    , E.onMouseDown (Selected option.id)
+                    , E.onMouseDown (MouseDown option.id)
+                    , E.onMouseUp MouseUp
                     , Common.dataTestId option.id
                     ]
                 )
